@@ -1,0 +1,10 @@
+debug/botplayer.o
+debug/cardinfo.o
+debug/main.o
+debug/mainwindow.o
+debug/playercardinfo.o
+debug/realplayer.o
+debug/qrc_resource.o
+debug/moc_botplayer.o
+debug/moc_mainwindow.o
+debug/moc_realplayer.o
