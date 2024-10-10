@@ -5,6 +5,7 @@ class cardInfo
 {
 public:
     cardInfo();
+    pussy;
 };
 
 #endif // CARDINFO_H
