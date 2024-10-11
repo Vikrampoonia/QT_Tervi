@@ -43,18 +43,18 @@ void MainWindow::onReadyRead()
 
 void MainWindow::allocateRoom()
 {
-
+    //qDebug()<<"Welcome to allocate room";
     QByteArray data = clientSocket->readAll();
     QString str=QString::fromUtf8(data);
     qDebug()<<"Message sent by client"<<str;
-    if(clientAssociated.find(clientSocket)!=clientAssociated.end())
+    if(clientAssociated.find(clientSocket)==clientAssociated.end())
     {
         //connected+"l"+room number+"l";
         int roomNumber,connectionOrder;
-        if(str==false)
+        if(str=="false")
         {
             int size=roomLocator.size();
-            if(roomLocator[size-1]->size()==4)
+            if(roomLocator[size-1]->clientId.size()==4)
             {
                 //need to intialise room
                 initialiseRoom(0);
@@ -62,6 +62,7 @@ void MainWindow::allocateRoom()
             roomLocator[roomLocator.size()-1]->clientId.push_back(clientSocket);
             clientAssociated[clientSocket]=QString::number(roomLocator.size()-1)+"f";
             roomNumber=roomLocator.size()-1;
+            roomLocator[roomLocator.size()-1]->setTeam(false);
             connectionOrder=roomLocator[roomLocator.size()-1]->clientId.size()-1;
         }
         else
@@ -75,23 +76,25 @@ void MainWindow::allocateRoom()
             roomLocatorTeam[size-1]->clientId.push_back(clientSocket);
             clientAssociated[clientSocket]=QString::number(roomLocatorTeam.size()-1)+"t";
             roomNumber=roomLocatorTeam.size()-1;
+            roomLocatorTeam[roomLocatorTeam.size()-1]->setTeam(true);
             connectionOrder=roomLocatorTeam[roomLocatorTeam.size()-1]->clientId.size()-1;
         }
 
-        qDebug()<<"Room associated with this client is: "<<clientAssociated[clientSocket];
-        qDebug()<<"Message sent to client"<<QString::number(roomNumber)+QString::number(connectionOrder);
-        clientSocket->write((QString::number(roomNumber)+QString::number(connectionOrder)).toUtf8());
+       // qDebug()<<"Room associated with this client is: "<<clientAssociated[clientSocket];
+        //qDebug()<<"Message sent to client"<<QString::number(roomNumber)+"l"+QString::number(connectionOrder);
+        clientSocket->write((QString::number(connectionOrder)+"l"+QString::number(roomNumber)+"l").toUtf8());
     }
     else
     {
-        findAction();
+        findAction(str);
     }
 }
 
-void MainWindow::findAction()
+void MainWindow::findAction(QString data)
 {
     Rooms* room;
     QString str=clientAssociated[clientSocket];
+    //qDebug()<<"clientAssociated[clientSocket]: "<<str;
     QString length1="";
 
     for(int i=0; i<str.size()-1; i++)
@@ -114,17 +117,17 @@ void MainWindow::findAction()
 
         room->setStartMove();
         int move=room->getStartMove();
-        str=QString::fromUtf8(clientSocket->readAll());
 
-        if(room->getServerMove)
+        //qDebug()<<"Message sent to client: "<<data;
+        if(room->getServerMove()==true)
         {
             //start 13 card game
-            actionAfterStart(room,move,str);
+            //actionAfterStart(room,move,str);
         }
         else
         {
             //start basic info before game start
-            actionBeforeStart(room,move,str);
+            actionBeforeStart(room,move,data);
         }
     }
     else
@@ -139,15 +142,39 @@ void MainWindow::actionBeforeStart(Rooms* room, int move, QString str)
 {
     if((move-1)/4==0)
     {
-        //QString::number(name.length())+"l"+m->getPlayerName()+"True":"False";
+        room->playerName.push_back(str);
 
-        for(int i=0; i<str.size(); i++)
+        if((move)%4==0)
         {
+            //orderofconnection+playerName  +13cardValue+currentMove
+            //qDebug()<<"ALl name: "<<room->playerName;
+            QString response="";
+            for(int i=0; i<4; i++)
+            {
+                response+=QString::number(i)+QString::number(room->playerName[i].size())+"l"+room->playerName[i];
+            }
+           // qDebug()<<"Response :"<<response;
+
+            CardInfo* c=new CardInfo();
+
+
+            for(int i=0; i<4; i++)
+            {
+                QString cardValue="";
+                room->p[i]->initialiseMembers();
+                room->p[i]->setCard(i,c);
+                //qDebug()<<"playerNumber: "<<i;
+                for(int j=0; j<13; j++)
+                {
+                    //qDebug()<<"Cardvalue: "<<room->p[i]->getCard(j);
+                    cardValue+=QString::number(room->p[i]->getCard(j))+"l";
+                }
+
+                //qDebug()<<"Response sent to client: "<<(response+cardValue);
+                room->clientId[i]->write((response+cardValue+QString::number(room->getCurrentPlayer())).toUtf8());
+            }
 
         }
-
-
-
 
     }
 }
@@ -183,6 +210,14 @@ Rooms::Rooms()
     startMove=0;
     currentPlayer=0;
     currentRound=0;
+    startPlayer=0;
+
+    for(int i=0; i<4; i++)
+    {
+        playerCardInfo* player=new playerCardInfo();
+        p.push_back(player);
+    }
+
 }
 
 bool Rooms::getServerMove()
@@ -216,3 +251,30 @@ void Rooms::setCurrentRound()
 }
 
 
+void Rooms::setTeam(bool flag)
+{
+    team=flag;
+}
+
+
+bool Rooms::getTeam()
+{
+    return team;
+}
+
+void Rooms::setCurrentPlayer(int val)
+{
+    currentPlayer=val;
+}
+int Rooms::getCurrentPlayer()
+{
+    return currentPlayer;
+}
+void Rooms::setStartPlayer(int val)
+{
+    startPlayer=val;
+}
+int Rooms::getStartPlayer()
+{
+    return startPlayer;
+}

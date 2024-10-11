@@ -6,6 +6,8 @@
 #include <QTcpSocket>
 #include <map>
 #include<vector>
+#include "cardinfo.h"
+#include "playercardinfo.h"
 
 namespace Ui {
 class MainWindow;
@@ -17,12 +19,14 @@ class Rooms
     bool serverMove;
     int startMove;
     int currentPlayer;
+    int startPlayer;
     int currentRound;
 
 public:
     Rooms();
     std::vector<QTcpSocket*>clientId;
     std::vector<QString>playerName;
+    std::vector<playerCardInfo*>p;
 
     bool getServerMove();
     void setServerMove();
@@ -30,8 +34,12 @@ public:
     void setStartMove();
     int getCurrentRound();
     void setCurrentRound();
-
-
+    void setTeam(bool );
+    bool getTeam();
+    void setCurrentPlayer(int );
+    int getCurrentPlayer();
+    void setStartPlayer(int );
+    int getStartPlayer();
 };
 
 
@@ -55,7 +63,8 @@ public:
 
     void initialiseRoom(int );
     void allocateRoom();
-    void findAction();
+    void findAction(QString );
+    void actionBeforeStart(Rooms* , int , QString );
 
 private slots:
     void onNewConnection();
