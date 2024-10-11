@@ -6,6 +6,7 @@
 #include <QTcpSocket>
 #include <map>
 #include<vector>
+#include <QList>
 #include "cardinfo.h"
 #include "playercardinfo.h"
 
@@ -27,11 +28,13 @@ public:
     std::vector<QTcpSocket*>clientId;
     std::vector<QString>playerName;
     std::vector<playerCardInfo*>p;
+    std::vector<int>cardInstance;
 
     bool getServerMove();
     void setServerMove();
     int getStartMove();
     void setStartMove();
+    void setStartMove(int );
     int getCurrentRound();
     void setCurrentRound();
     void setTeam(bool );
@@ -62,9 +65,10 @@ public:
 
 
     void initialiseRoom(int );
-    void allocateRoom();
-    void findAction(QString );
+    void allocateRoom(QString ,QTcpSocket*);
+    void findAction(QString ,QTcpSocket* );
     void actionBeforeStart(Rooms* , int , QString );
+    void actionAfterStart(Rooms* , int , QString );
 
 private slots:
     void onNewConnection();
@@ -74,10 +78,17 @@ private slots:
 private:
     Ui::MainWindow *ui;
     QTcpServer *server;
-    QTcpSocket *clientSocket;
+    QList<QTcpSocket*>clients;
 };
 
 #endif // MAINWINDOW_H
+
+void showValidCard(std::vector<int>&, int , int , std::vector<playerCardInfo*> ,std::vector<int>&);
+int countColorCard(int ,  std::vector<playerCardInfo*> ,int );
+void helper_of_showValidCard(int ,int ,int , int ,std::vector<playerCardInfo*> ,std::vector<int>& );
+void helper_of_showValidCard( int ,std::vector<playerCardInfo*> ,std::vector<int>& );
+int setMadeBy(int ,std::vector<int>&);
+
 
 
 //for individual
@@ -85,7 +96,7 @@ private:
  1) Get message of order of connected+"l"+room number+"l";
  2) Get Message of all  playernumber acc to they ,player name+player 13 card value+currentMove , send trumpColor by First Player
  3) Get Message of trumpColor+suggested bid+updated 13Card value ,send number of bid
- 4) Get all player bid and curret player (player,bid+l    current move)and send (player+cardValue);
+ 4) Get all player bid and curret player (bid+l    current move)and send (player+cardValue);
  5) Get these response from server until round over
     player who has first turn sent as playerWhomSent+PlayerWhoseTurn
     first sent all player to playerWhomSent+playernum+cardValue+"l";
