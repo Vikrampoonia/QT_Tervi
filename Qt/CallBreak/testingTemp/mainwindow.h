@@ -68,7 +68,7 @@ public:
     void allocateRoom(QString ,QTcpSocket*);
     void findAction(QString ,QTcpSocket* );
     void actionBeforeStart(Rooms* , int , QString );
-    void actionAfterStart(Rooms* , int , QString );
+    void actionAfterStart(Rooms* , int , QString ,QTcpSocket* );
 
 private slots:
     void onNewConnection();

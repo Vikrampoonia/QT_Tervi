@@ -134,7 +134,7 @@ void MainWindow::findAction(QString data,QTcpSocket* clientSocket)
         if(room->getServerMove()==true)
         {
             //start 13 card game
-            actionAfterStart(room,move,data);
+            actionAfterStart(room,move,data,clientSocket);
         }
         else
         {
@@ -259,6 +259,17 @@ void MainWindow::actionBeforeStart(Rooms* room, int move, QString str)
         int bid=length1.toInt(&ok);
         if(ok)
         {
+            if(room->getTeam())
+            {
+                if((room->getStartPlayer())==indx || (room->getStartPlayer()+2)%4==indx)
+                {
+                    bid=8;
+                }
+                else
+                {
+                    bid=6;
+                }
+            }
             room->p[indx]->setScoreCard(bid);
         }
         else
@@ -287,7 +298,7 @@ void MainWindow::actionBeforeStart(Rooms* room, int move, QString str)
 
 }
 
-void MainWindow::actionAfterStart(Rooms* room, int move, QString str)
+void MainWindow::actionAfterStart(Rooms* room, int move, QString str,QTcpSocket* clientSocket)
 {
     //whomSent+cardValue
     qDebug()<<"Welcome to game sart";
@@ -295,26 +306,30 @@ void MainWindow::actionAfterStart(Rooms* room, int move, QString str)
     {
         //one round is complete send score
 
-        if(room->getTeam())
+        /*if(room->getTeam())
         {
 
-        }
-        else
-        {
+        }*/
+        //else
+        //{
             QString response="";
             for(int i=0; i<4; i++)
             {
-                //response+=QString::toFloat(room->p[i]->getScoreCard(room->getCurrentRound()))+"l";
+                qDebug()<<room->p[i]->getScoreCard(room->getCurrentRound());
+                response+=QString::number(room->p[i]->getScoreCard(room->getCurrentRound()))+"l";
             }
+            qDebug()<<"Response"<<response;
 
-            for(int i=0; i<4; i++)
-            {
-                room->clientId[i]->write(response.toUtf8());
-            }
+                clientSocket->write(response.toUtf8());
+
 
             qDebug()<<"game is end so update whole server";
-        }
-
+        //}
+            if(move%4==0)
+            {
+                room->setServerMove();
+                room->setStartMove(0);
+            }
 
 
     }
@@ -323,7 +338,7 @@ void MainWindow::actionAfterStart(Rooms* room, int move, QString str)
         int playerThrow=str[0].unicode()-'0';
         QString cardValue="";
 
-        for(int i=0; i<str.size(); i++)
+        for(int i=1; i<str.size(); i++)
         {
             cardValue+=str[i];
         }
@@ -339,7 +354,7 @@ void MainWindow::actionAfterStart(Rooms* room, int move, QString str)
         {
             qDebug()<<"Invalid card conversion";
         }
-
+        qDebug()<<"Player throw: "<<playerThrow<<" value: "<<value<<"   cardValue:"<<cardValue;
 
         room->cardInstance.push_back(value);
         room->setCurrentPlayer((playerThrow+1)%4);
@@ -357,6 +372,7 @@ void MainWindow::actionAfterStart(Rooms* room, int move, QString str)
 
             //find whom set it is
             int setter= setMadeBy(room->getCurrentPlayer(),room->cardInstance);
+            qDebug()<<"Setter: "<<setter;
 
             room->setCurrentPlayer(setter);
 
@@ -372,15 +388,14 @@ void MainWindow::actionAfterStart(Rooms* room, int move, QString str)
 
             if((move/4)!=13)
             {
-                room->clientId[setter]->write((QString::number(setter)+QString::number(setter)).toUtf8());
+                room->clientId[setter]->write((QString::number(setter)).toUtf8());
             }
 
         }
         else
         {
             //first Send playerWhomSent+PlayerWhoThrowCard+CardValue+'l'
-            room->setCurrentPlayer((playerThrow+1)%4);
-            room->cardInstance.push_back(value);
+
 
             for(int i=0; i<4; i++)
             {
@@ -399,7 +414,7 @@ void MainWindow::actionAfterStart(Rooms* room, int move, QString str)
             }
             validCard.clear();
             qDebug()<<"ValidCard are: "<<cardValue;
-            room->clientId[room->getCurrentPlayer()]->write((QString::number(room->getCurrentPlayer())+cardValue+QString::number(room->getCurrentPlayer())).toUtf8());
+            room->clientId[room->getCurrentPlayer()]->write((cardValue+QString::number(room->getCurrentPlayer())).toUtf8());
             cardValue="";
         }
     }
@@ -634,7 +649,7 @@ void helper_of_showValidCard( int currentPlayer,std::vector<playerCardInfo*> p,s
 //identify whom set is
 int setMadeBy(int firstPlayer,std::vector<int>&cardInstance)
 {
-    int cardColor=(cardInstance[firstPlayer]-2)/13;
+    int cardColor=(cardInstance[0]-2)/13;
 
     int seter=firstPlayer;
     int max_card=-1;
