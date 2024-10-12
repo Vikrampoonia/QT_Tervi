@@ -54,6 +54,7 @@ void realPlayer::onReadyRead()
     QByteArray data = socket->readAll();
     clientMove++;
     qDebug() << "Received from server: " << data;
+    qDebug()<<"Move: "<<clientMove;
     sendResponse(data);
     data.clear();
 }
@@ -144,9 +145,10 @@ void realPlayer::sendResponse(QByteArray data)
 {
     QString str=QString::fromUtf8(data);
     int move=clientMove; qDebug()<<"move: "<<move;
-    //connectedNumber+"l"+room number+"l"
+
     if(move==1)
     {
+        //connectedNumber+"l"+room number+"l"
         QString length1="";  int flag=0;
         for(int i=0; i<str.size(); i++)
         {
@@ -180,8 +182,7 @@ void realPlayer::sendResponse(QByteArray data)
         //send your name and want to play in team or not
 
         QString name=m->getPlayerName();
-        name=QString::number(name.length())+"l"+name;
-        (m->playTeam==true)?name=name+"True":name=name+"False";
+        //name=QString::number(name.length())+"l"+name;
         qDebug()<<"name: "<<name;
         Team=m->playTeam;
         socket->write(name.toUtf8());
@@ -243,7 +244,18 @@ void realPlayer::sendResponse(QByteArray data)
 
         //qDebug()<<"Suggested bid "<<num;
         //make bid gui
-        makeBidGui(1,num);
+        if(Team==true)
+        {
+            num="";
+            num+=QString::number(clientNumber)+"8";
+            qDebug()<<"num: "<<num;
+            socket->write(num.toUtf8());
+        }
+        else
+        {
+            makeBidGui(1,num);
+        }
+
 
         //response send from slot onButtonClick as number of bid
     }
@@ -256,7 +268,7 @@ void realPlayer::sendResponse(QByteArray data)
         makeGridLayout();
 
         //show  current player that its your turn
-        int num = str[str.size() - 2].unicode() - '0';
+        int num = str[str.size() - 1].unicode() - '0';
         //currentClient=num;
         if(clientNumber==num)
         {
@@ -267,7 +279,7 @@ void realPlayer::sendResponse(QByteArray data)
     }
     else if(move<57)
     {
-
+        qDebug()<<"Server message: "<<str;
 
         //currentPlayer+playerwhoThrow+throwCardValue+"l"
 
@@ -294,7 +306,7 @@ void realPlayer::sendResponse(QByteArray data)
             indx=removeQlable(tempCurrentClient,playerNum,1);
 
             //qDebug()<<"Message from server: "<<str;
-            //qDebug()<<"tempCurrentClient: "<<tempCurrentClient<<"   playerThrow: "<<playerNum<<"  cardValue: "<<cardValue<<"  indx:"<<indx;
+            qDebug()<<"tempCurrentClient: "<<tempCurrentClient<<"   playerThrow: "<<playerNum<<"  cardValue: "<<cardValue<<"  indx:"<<indx;
 
 
             int playerTurn=str[str.size()-1].unicode()-'0';
@@ -308,16 +320,17 @@ void realPlayer::sendResponse(QByteArray data)
                 //tempCurrentClient=currentClient;
                 tempCurrentClient=playerTurn;
                 //show thrown card
-                currentInstance[(roomNumber*4+playerTurn)]->addCardTable(cardValue,indx+1);
-
+                //currentInstance[(roomNumber*4+playerTurn)]->addCardTable(cardValue,indx+1);
+                addCardTable(cardValue,indx+1);
                 cardValue="";
                 //extract valid card and make them clickable
                 for(int j=i+1; j<str.size(); j++)
                 {
                     if(str[j]=='l')
                     {
-                        //qDebug()<<"Extracted cardvalue: "<<cardValue;
-                        currentInstance[(roomNumber*4+tempCurrentClient)]->changeStateOfClickEvent(true,cardValue);
+                        qDebug()<<"Extracted Valid cardvalue: "<<cardValue;
+                        //currentInstance[(roomNumber*4+tempCurrentClient)]->changeStateOfClickEvent(true,cardValue);
+                        changeStateOfClickEvent(true,cardValue);
                         cardValue="";
                     }
                     else
@@ -325,47 +338,77 @@ void realPlayer::sendResponse(QByteArray data)
                         cardValue+=str[j];
                     }
                 }
-                currentInstance[(roomNumber*4+tempCurrentClient)]->realPlayerNameInfo[2]->setText("Your Turn");
+                //currentInstance[(roomNumber*4+tempCurrentClient)]->realPlayerNameInfo[2]->setText("Your Turn");
+                realPlayerNameInfo[2]->setText("Your Turn");
             }
             else
             {
                 //currentPlayer+playerwhoThrow+throwCardValue+"l"
-                //qDebug()<<"other player";
+                qDebug()<<"other player";
                 //show thrown card
                 if(tempCurrentClient!=playerNum)
                 {
-                    currentInstance[(roomNumber*4+tempCurrentClient)]->addCardTable(cardValue,indx+1);
+                    //currentInstance[(roomNumber*4+tempCurrentClient)]->addCardTable(cardValue,indx+1);
+                    addCardTable(cardValue,indx+1);
                 }
             }
 
             if(move%4==0)
             {
-                //qDebug()<<"Welcome to hide cardTable";
-                //qDebug()<<"Player turn usrd: "<<playerTurn;
+                qDebug()<<"Welcome to hide cardTable";
+                qDebug()<<"Player turn usrd: "<<playerTurn;
                 QTimer::singleShot(2000, this, &realPlayer::clearCardTable);
                 if(tempCurrentClient==playerTurn)
                 {
                     //for first firstPlayer currentPlayer+firstPlayer;
-                    //qDebug()<<"First Player Turn"<<playerNum;
+                    qDebug()<<"First Player Turn"<<playerNum;
                     //currentClient=playerTurn;
                     tempCurrentClient=playerTurn;
-                    currentInstance[(roomNumber*4+tempCurrentClient)]->realPlayerNameInfo[2]->setText("Your Turn");
+                    //currentInstance[(roomNumber*4+tempCurrentClient)]->realPlayerNameInfo[2]->setText("Your Turn");
+                    realPlayerNameInfo[2]->setText("Your Turn");
                     //update this player bid
                     QString setText=realPlayerNameInfo[3]->text();
                     setText=updatePlayerBid(setText);
                     realPlayerNameInfo[3]->setText(setText);
-                    currentInstance[(roomNumber*4+tempCurrentClient)]->changeStateOfClickEvent(true);
-
+                    //currentInstance[(roomNumber*4+tempCurrentClient)]->changeStateOfClickEvent(true);
+                    changeStateOfClickEvent(true);
                     for(int k=0; k<4; k++)
                     {
                         if(k!=playerTurn)
                         {
                             indx=removeQlable(k,tempCurrentClient,0);
-                            setText=currentInstance[(roomNumber*4+k)]->playerNameInfo[indx][2]->text();
-                            setText=updatePlayerBid(setText);
-                            currentInstance[(roomNumber*4+k)]->playerNameInfo[indx][2]->setText(setText);
+                            //setText=currentInstance[(roomNumber*4+k)]->playerNameInfo[indx][2]->text();
+                            //setText=updatePlayerBid(setText);
+
+                            if(Team)
+                            {
+                                currentInstanceTeam[(roomNumber*4+k)]->playerNameInfo[indx][2]->setText(setText);
+                            }
+                            else
+                            {
+                                currentInstance[(roomNumber*4+k)]->playerNameInfo[indx][2]->setText(setText);
+                            }
                         }
                     }
+
+                    if(Team)
+                    {
+                        currentInstanceTeam[(roomNumber*4+(tempCurrentClient+2)%4)]->realPlayerNameInfo[3]->setText(setText);
+                        for(int k=0; k<4; k++)
+                        {
+                            if(k!=((tempCurrentClient+2)%4))
+                            {
+                                indx=removeQlable(k,(tempCurrentClient+2)%4,0);
+                                //setText=currentInstance[(roomNumber*4+k)]->playerNameInfo[indx][2]->text();
+                                //setText=updatePlayerBid(setText);
+                                currentInstanceTeam[(roomNumber*4+k)]->playerNameInfo[indx][2]->setText(setText);
+
+                            }
+                        }
+                        qDebug()<<"Status updated successfully";
+                    }
+
+
 
                 }
 
@@ -401,10 +444,10 @@ void realPlayer::sendResponse(QByteArray data)
     {
         //add score here
         //qDebug()<<"Welcome to check score";
-        // 0score"l"1score"l"
+        // score"l"score"l"
         std::vector<float>v;
         QString bid="";
-        for(int i=1; i<str.size(); i++)
+        for(int i=0; i<str.size(); i++)
         {
             if(str[i]!='l')
             {
@@ -413,7 +456,7 @@ void realPlayer::sendResponse(QByteArray data)
             else
             {
                 //start manipulation
-                i++;
+
                 bool ok;
                 float val=bid.toFloat(&ok);
 
@@ -429,7 +472,7 @@ void realPlayer::sendResponse(QByteArray data)
             }
         }
 
-        //qDebug()<<"Bid after parsing: "<<v;
+        qDebug()<<"Bid after parsing: "<<v;
 
 
 
@@ -573,27 +616,24 @@ void realPlayer::putDataIntoLabels(QString str)
 
     else if(clientMove==4)
     {
-        //"04l12l26l32l0"  num+bid+l  last first player number
+        //"4l2l6l2l0"  bid+l  first player number
         std::vector<QString>ans;
-
-        for(int i=0; i<str.size()-2; i++)
+        QString bid="";
+        for(int i=0; i<str.size()-1; i++)
         {
-            QString bid=str[i+1];
-            if(str[i+2]!='l')
+            if(str[i]=='l')
             {
-                bid+=str[i+2];
-                i++;
                 ans.push_back(bid);
+                bid="";
             }
             else
             {
-                ans.push_back(bid);
+                bid+=str[i];
             }
-            i+=2;
         }
-        int num = str[str.size() - 1].unicode() - '0';
+        int num = clientNumber;
 
-        //qDebug()<<"bid vector: "<<ans;
+        qDebug()<<"bid vector: "<<ans;
 
         //left
         playerNameInfo[0][2]->setText("0/"+ans[(num+1)%4]);
@@ -657,7 +697,7 @@ int realPlayer::removeQlable(int tempCurrentClient,int playerNum, int flag)
     int indx=-1;
     if(tempCurrentClient!=playerNum)
     {
-        //left top right
+        /*//left top right
         if(tempCurrentClient==0 && tempCurrentClient!=playerNum)
         {
             //1  2  3
@@ -696,7 +736,14 @@ int realPlayer::removeQlable(int tempCurrentClient,int playerNum, int flag)
         else
         {
             qDebug()<<"Invalid tempCurrentClient from server"<<tempCurrentClient;
+        }*/
+
+        indx=playerNum-(tempCurrentClient+1)%4;
+        if(indx<0)
+        {
+            indx+=4;
         }
+        qDebug()<<"indx: "<<indx;
 
 
         QHBoxLayout* tempTopLayer=nullptr;
@@ -788,7 +835,7 @@ QString realPlayer::updatePlayerBid(QString setText)
             flag=false;
         }
     }
-    //qDebug()<<"setBefore: "<<setBefore<<"   setAfter: "<<setAfter<<"  setText: "<<setText;
+
     int setNum=setBefore.toInt(&flag);
     if(flag)
     {
@@ -821,20 +868,6 @@ QVBoxLayout* realPlayer::makeGameGui()
     scoreButton->setFixedSize(40,30);
     layer->addWidget(backButton);
     layer->addWidget(scoreButton);
-    //First layer consist Back Button  and score button
-
-    //layer consist of sub layers for other players like:
-    //for top
-    //1)name and image 2)Card Layer   3) Current/Progressing
-
-    //Right vertical
-    //Conating QHBox-> QHBox(name and image)+QVBox(card image)+QHBox(Sets)
-
-    //for left same
-
-    //Second layer(left+middle+right)
-
-    //for right use top only add one more that is show your turn with current/Progressing
 
     mainLayout->addLayout(layer);
     mainLayout->addLayout(makeTopLayer());
@@ -1237,7 +1270,7 @@ void  realPlayer::makeBidGui(int flag, QString suggestBid)
 
 void realPlayer::makeGridLayout()
 {
-    qDebug()<<"making grid: ";
+
     QGridLayout* layer=new QGridLayout();
 
     for(int i=0; i<4; i++)
@@ -1245,8 +1278,6 @@ void realPlayer::makeGridLayout()
         QLabel* label=new QLabel();
 
         int r1,c1;
-
-        //(i==0)?r1=2,c1=1:(i==1)?r1=1,c1=0:(i==2)?r1=0,c1=1:r1=1,c1=2;
 
         if(i==0)
         {
@@ -1265,9 +1296,6 @@ void realPlayer::makeGridLayout()
             r1=1,c1=2;
         }
 
-
-        //qDebug()<<"i: "<<i<<"  ri: "<<r1<<"  ci: "<<c1;
-
         label->setVisible(true);
         layer->addWidget(label,r1,c1);
         tableCardLabel.push_back(label);
@@ -1285,10 +1313,9 @@ void realPlayer::onButtonClicked()
     {
         QString buttonText = Button->text();  // Get the text of the clicked button
 
-
         // deleting bid gui
         makeTrumpColorGUI(0);
-        //qDebug()<<"After deleting bid gui";
+
         makeBidGui(0,"");
 
         socket->write((QString::number(clientNumber)+buttonText).toUtf8());
@@ -1298,28 +1325,22 @@ void realPlayer::onButtonClicked()
 void realPlayer::updateCardImage(QString str)
 {
 
-        bool ok;
-        //qDebug()<<"bool ok value: "<<ok;
-        int number = trumpColor.toInt(&ok);
+        int number = str[0].unicode()-'0';
 
-        if(ok)
+        std::vector<std::vector<std::pair<int,int>>> ArrayIndex{{std::make_pair(39,51),std::make_pair(13,25),std::make_pair(26,38),std::make_pair(0,12)},{std::make_pair(0,12),std::make_pair(39,51),std::make_pair(26,38),std::make_pair(13,25)},{std::make_pair(0,12),std::make_pair(13,25),std::make_pair(39,51),std::make_pair(26,38)},{std::make_pair(0,12),std::make_pair(13,25),std::make_pair(26,38),std::make_pair(39,51)}};
+
+        //qDebug()<<"Before inserting img: "<<img;
+        for(int i=0; i<ArrayIndex[number].size(); i++)
         {
+            int first=ArrayIndex[number][i].first;
+            int second=ArrayIndex[number][i].second;
 
-            std::vector<std::vector<std::pair<int,int>>> ArrayIndex{{std::make_pair(39,51),std::make_pair(13,25),std::make_pair(26,38),std::make_pair(0,12)},{std::make_pair(0,12),std::make_pair(39,51),std::make_pair(26,38),std::make_pair(13,25)},{std::make_pair(0,12),std::make_pair(13,25),std::make_pair(39,51),std::make_pair(26,38)},{std::make_pair(0,12),std::make_pair(13,25),std::make_pair(26,38),std::make_pair(39,51)}};
-
-            //qDebug()<<"Before inserting img: "<<img;
-            for(int i=0; i<ArrayIndex[number].size(); i++)
+            for(int j=first; j<=second; j++)
             {
-                int first=ArrayIndex[number][i].first;
-                int second=ArrayIndex[number][i].second;
-
-                for(int j=first; j<=second; j++)
-                {
-                    //qDebug()<<"j inserting: "<<j;
-                    img.push_back(j);
-                }
-
+                img.push_back(j);
             }
+
+        }
 
             //qDebug()<<"After inserting img: "<<img;
             QString length1=""; int i=0,k=2;
@@ -1369,11 +1390,7 @@ void realPlayer::updateCardImage(QString str)
                     }
                 }
 
-        }
-        else
-        {
-            qDebug()<<"Conversion failed";
-        }
+
 
 
 
@@ -1427,15 +1444,7 @@ void realPlayer::prepareForNewRound()
 
     */
     clientRound++;
-    for(int i=0; i<3; i++)
-    {
-        for(int j=1; j<3; j++)
-        {
-            playerNameInfo[i][j]->clear();
-        }
-        realPlayerNameInfo[i+1]->clear();
 
-    }
     tableCardLabel.clear();
     playerCardLinkInfo.clear();
     realPlayerCardInfo.clear();
@@ -1475,6 +1484,7 @@ void realPlayer::prepareForNewRound()
     {
         ClickableLabel* label=new ClickableLabel();
         label->setRoomNumber(roomNumber);
+        label->setRealPlayerInstance(this);
         realPlayerCardInfo.push_back(label);
         bottomWidgetLayer->addWidget(label);
         label->setClickEvent(false);
@@ -1586,7 +1596,7 @@ void realPlayer::removeGridLayout()
         delete vBoxLayout;
 
     }
-    qDebug()<<"Successfully delete from grid layout";
+
 }
 
 
@@ -1598,8 +1608,7 @@ void ClickableLabel::mousePressEvent(QMouseEvent* event)
         emit clicked();
         QLabel::mousePressEvent(event);
         QString str = this->getAssociatedValue();
-        qDebug()<<"CLicked value: "<<str;
-        qDebug()<<"instance: "<<this<<"   realPLayer"<<this->getRealPlayerInstance();
+
         realPlayer* tempPtr;
         int currentClient=this->getRealPlayerInstance()->clientNumber;
         if(this->getRealPlayerInstance()->Team)
@@ -1610,32 +1619,21 @@ void ClickableLabel::mousePressEvent(QMouseEvent* event)
         {
             tempPtr=currentInstance[(this->getRoomNumber()*4+currentClient)];
         }
+        tempPtr=this->getRealPlayerInstance();
 
-        //qDebug()<<"instance: "<<this<<"   "<<this->getRealPlayerInstance()->clientNumber;
-        //if(clientMoveMiddleLayer==2)
+
 
         if(this->getRealPlayerInstance()->clientMove==2)
         {
 
-
-            //currentInstance[(this->getRoomNumber()*4+currentClient)]->makeTrumpColorGUI(0);
             tempPtr->makeTrumpColorGUI(0);
-            //currentInstance[(this->getRoomNumber()*4+currentClient)]->getSocketValue()->write(str.toUtf8());
-            tempPtr->getSocketValue()->write(str.toUtf8());
+            tempPtr->getSocketValue()->write((str+"l").toUtf8());
+            tempPtr->getSocketValue()->flush();
+
         }
         else
         {
             this->clear();
-            qDebug()<<"currentClient: "<<currentClient;
-            //erase desired clicklable from vector
-            /*for(int i=0; i< currentInstance[(this->getRoomNumber()*4+currentClient)]->realPlayerCardInfo.size(); i++)
-            {
-                if( currentInstance[(this->getRoomNumber()*4+currentClient)]->realPlayerCardInfo[i]==this)
-                {
-                    currentInstance[(this->getRoomNumber()*4+currentClient)]->realPlayerCardInfo.erase(currentInstance[(this->getRoomNumber()*4+currentClient)]->realPlayerCardInfo.begin()+i);
-                    break;
-                }
-            }*/
 
             for(int i=0; i< tempPtr->realPlayerCardInfo.size(); i++)
             {
@@ -1646,29 +1644,6 @@ void ClickableLabel::mousePressEvent(QMouseEvent* event)
                 }
             }
 
-
-            //delete the vector from QHBox layout also
-            /*if(currentInstance[(this->getRoomNumber()*4+currentClient)]->bottomWidgetLayer)
-            {
-                int count =currentInstance[(this->getRoomNumber()*4+currentClient)]->bottomWidgetLayer->count();
-                for(int j=0; j<count; j++)
-                {
-                    QWidget *label = currentInstance[(this->getRoomNumber()*4+currentClient)]->bottomWidgetLayer->itemAt(j)->widget();
-
-                    if(label==this)
-                    {
-                        qDebug()<<"Successfully found the label";
-                        currentInstance[(this->getRoomNumber()*4+currentClient)]->bottomWidgetLayer->removeWidget(label);
-                        label->setParent(nullptr);
-                        //delete label;
-                        qDebug()<<"successfully delete";
-                        break;
-                    }
-                }
-            }
-            qDebug()<<"after deleted: "<<this;
-*/
-
             if(tempPtr->bottomWidgetLayer)
             {
                 int count =tempPtr->bottomWidgetLayer->count();
@@ -1678,58 +1653,22 @@ void ClickableLabel::mousePressEvent(QMouseEvent* event)
 
                     if(label==this)
                     {
-                        qDebug()<<"Successfully found the label";
+
                         tempPtr->bottomWidgetLayer->removeWidget(label);
                         label->setParent(nullptr);
-                        //delete label;
-                        qDebug()<<"successfully delete";
+
                         break;
                     }
                 }
             }
-            qDebug()<<"after deleted: "<<this;
 
-
-            qDebug()<<"value clicked: "<<str<<"  currentCLient:"<<(this->getRoomNumber()*4+currentClient);
-            //add cards to table
-            /*currentInstance[(this->getRoomNumber()*4+currentClient)]->addCardTable(str,0);
-            //make click event disable
-            currentInstance[(this->getRoomNumber()*4+currentClient)]->changeStateOfClickEvent(false);
-            qDebug()<<"After clickdisabled";
-            qDebug()<<"currentInstance->clientNumber: "<<currentInstance[(this->getRoomNumber()*4+currentClient)]->clientNumber<<"  currentClient:"<<currentClient;
-            //send response to server
-
-            qDebug()<<"Response that sen to be server: "<<(QString::number(currentClient)+str);
-*/
             tempPtr->addCardTable(str,0);
-            //make click event disable
+
             tempPtr->changeStateOfClickEvent(false);
-            qDebug()<<"After clickdisabled";
-            qDebug()<<"currentInstance->clientNumber: "<<tempPtr->clientNumber<<"  currentClient:"<<currentClient;
-            //send response to server
-
-            qDebug()<<"Response that sen to be server: "<<(QString::number(currentClient)+str);
-
-
-           /* QTcpSocket *socket = currentInstance[(this->getRoomNumber()*4+currentClient)]->getSocketValue();
-            if (socket && socket->state() == QAbstractSocket::ConnectedState) {
-                //socket->write((QString::number(currentClient) + str).toUtf8());
-                qint64 bytesWritten = socket->write((QString::number(currentClient) + str).toUtf8());
-                if (bytesWritten == -1) {
-                    qDebug() << "Error writing to socket: " << socket->errorString();
-                }
-
-                qDebug() << "Successfully sent response to the server.";
-            } else {
-                qDebug() << "Socket is not connected!";
-            }
-            currentInstance[(this->getRoomNumber()*4+currentClient)]->realPlayerNameInfo[2]->setText("");
-            qDebug()<<"Successfully out from click cardlable event";
-*/
 
             QTcpSocket *socket = tempPtr->getSocketValue();
             if (socket && socket->state() == QAbstractSocket::ConnectedState) {
-                //socket->write((QString::number(currentClient) + str).toUtf8());
+
                 qint64 bytesWritten = socket->write((QString::number(currentClient) + str).toUtf8());
                 if (bytesWritten == -1) {
                     qDebug() << "Error writing to socket: " << socket->errorString();
@@ -1740,9 +1679,6 @@ void ClickableLabel::mousePressEvent(QMouseEvent* event)
                 qDebug() << "Socket is not connected!";
             }
             tempPtr->realPlayerNameInfo[2]->setText("");
-            qDebug()<<"Successfully out from click cardlable event";
-
-
 
 
         }
@@ -1780,9 +1716,10 @@ void ClickableLabel::setRoomNumber(int val)
 
 void ClickableLabel::setRealPlayerInstance(realPlayer* instance)
 {
-    qDebug()<<"Setting instance: "<<instance<<"   this: "<<this<<"   instance->trumpColor"<<instance->trumpColor;
+    //qDebug()<<"Setting instance: "<<instance<<"   this: "<<this<<"   instance->trumpColor"<<instance->trumpColor;
     realPlayerInstance=instance;
 }
+
 realPlayer* ClickableLabel::getRealPlayerInstance()
 {
     return realPlayerInstance;

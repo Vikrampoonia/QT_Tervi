@@ -152,10 +152,10 @@ private:
 
 //for individual
 /* CLient Moves When it get data from server
- 1) Get message of order of connected+"l"+room number
+ 1) Get message of order of connected+"l"+room number+"l";
  2) Get Message of all  playernumber acc to they ,player name+player 13 card value+currentMove , send trumpColor by First Player
- 3) Get Message of trumpColor+suggested bid+updated 13Card value ,send number of bid
- 4) Get all player bid and curret player (player,bid+l    current move)and send (player+cardValue);
+ 3) Get Message of trumpColor+suggested bid+updated 13Card value ,send (client number+number of bid)
+ 4) Get all player bid and curret player (bid+l    current move)and send (player+cardValue);
  5) Get these response from server until round over
     player who has first turn sent as playerWhomSent+PlayerWhoseTurn
     first sent all player to playerWhomSent+playernum+cardValue+"l";
