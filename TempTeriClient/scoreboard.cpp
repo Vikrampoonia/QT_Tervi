@@ -1,4 +1,4 @@
-#include "scoreboard.h"
+/*#include "scoreboard.h"
 #include "ui_scoreboard.h"
 #include "realplayer.h"
 
@@ -78,3 +78,4 @@ scoreBoard::~scoreBoard()
 {
     delete ui;
 }
+*/

@@ -16,7 +16,7 @@
 #include <QPropertyAnimation>
 
 #include "mainwindow.h"
-#include "scoreboard.h"
+//#include "scoreboard.h"
 
 
 namespace Ui {

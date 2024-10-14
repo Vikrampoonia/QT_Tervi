@@ -1,4 +1,4 @@
-#ifndef SCOREBOARD_H
+/*#ifndef SCOREBOARD_H
 #define SCOREBOARD_H
 
 #include <QDialog>
@@ -30,3 +30,4 @@ private:
 };
 
 #endif // SCOREBOARD_H
+*/

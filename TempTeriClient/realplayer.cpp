@@ -1684,10 +1684,10 @@ void ClickableLabel::mousePressEvent(QMouseEvent* event)
 
 void realPlayer::onButtonClickedScore()
 {
-    scoreBoard* playerWindow=new scoreBoard(this);
+   /* scoreBoard* playerWindow=new scoreBoard(this);
     playerWindow->setModal(true);
     //playerWindow->setWindowTitle(ScoreCard);
-    playerWindow->exec();
+    playerWindow->exec();*/
 }
 
 
