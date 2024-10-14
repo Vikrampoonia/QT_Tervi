@@ -16,7 +16,7 @@
 #include <QPropertyAnimation>
 
 #include "mainwindow.h"
-
+#include "scoreboard.h"
 
 
 namespace Ui {
@@ -82,7 +82,7 @@ public:
     int clientRound;
     int roomNumber;
 
-    std::vector<std::vector<float>>scoreCard;  //store each player score
+    std::vector<std::vector<QString>>scoreCard;  //store each player score
     //for each player other than real player
     // store Qlable of name and image with current/progressing set
     //store their QLable
@@ -141,7 +141,7 @@ private slots:
     void onReadyRead();
     void onConnected();
     void onButtonClicked();
-
+    void onButtonClickedScore();
 private:
     Ui::realPlayer *ui;
     QTcpSocket *socket;

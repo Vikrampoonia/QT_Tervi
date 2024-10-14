@@ -11,15 +11,18 @@ CONFIG += c++17
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
-    realplayer.cpp
+    realplayer.cpp \
+    scoreboard.cpp
 
 HEADERS += \
     mainwindow.h \
-    realplayer.h
+    realplayer.h \
+    scoreboard.h
 
 FORMS += \
     mainwindow.ui \
-    realplayer.ui
+    realplayer.ui \
+    scoreboard.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

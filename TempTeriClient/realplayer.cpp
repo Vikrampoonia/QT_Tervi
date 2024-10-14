@@ -445,7 +445,7 @@ void realPlayer::sendResponse(QByteArray data)
         //add score here
         //qDebug()<<"Welcome to check score";
         // score"l"score"l"
-        std::vector<float>v;
+        std::vector<QString>v;
         QString bid="";
         for(int i=0; i<str.size(); i++)
         {
@@ -457,25 +457,15 @@ void realPlayer::sendResponse(QByteArray data)
             {
                 //start manipulation
 
-                bool ok;
-                float val=bid.toFloat(&ok);
-
-                if(ok)
-                {
-                    v.push_back(val);
-                }
-                else
-                {
-                    qDebug()<<"Conversion failed";
-                }
+                v.push_back(bid);
                 bid="";
             }
         }
 
         qDebug()<<"Bid after parsing: "<<v;
-
-
-
+        scoreCard.pop_back();
+        scoreCard.push_back(v);
+        v.clear();
 
         prepareForNewRound();
         qDebug()<<"after prepare";
@@ -632,7 +622,7 @@ void realPlayer::putDataIntoLabels(QString str)
             }
         }
         int num = clientNumber;
-
+        scoreCard.push_back(ans);
         qDebug()<<"bid vector: "<<ans;
 
         //left
@@ -864,6 +854,9 @@ QVBoxLayout* realPlayer::makeGameGui()
     backButton->setText("X");
     backButton->setFixedSize(40,30);
     QPushButton* scoreButton=new QPushButton();
+    connect(scoreButton, &QPushButton::clicked, this, &realPlayer::onButtonClickedScore);
+
+
     scoreButton->setText("Score");
     scoreButton->setFixedSize(40,30);
     layer->addWidget(backButton);
@@ -1685,6 +1678,16 @@ void ClickableLabel::mousePressEvent(QMouseEvent* event)
 
     }
 
+}
+
+
+
+void realPlayer::onButtonClickedScore()
+{
+    scoreBoard* playerWindow=new scoreBoard(this);
+    playerWindow->setModal(true);
+    //playerWindow->setWindowTitle(ScoreCard);
+    playerWindow->exec();
 }
 
 
