@@ -10,8 +10,7 @@ std::vector<QString>Image{":/img/img/red_back.png"};
 //ISSUE CHECK PLAYER CARDS AFTER UPDATE BOTH IN CLIENT SIDE AND SERVER SIDE BEFORE AND AFTER OTHER THAT IT WORK PROPERLY
 
 
-std::vector<realPlayer* >currentInstance;//individual
-std::vector<realPlayer* >currentInstanceTeam; //team
+
 realPlayer::realPlayer(MainWindow *mainWindow,QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::realPlayer),m(mainWindow)
@@ -31,8 +30,8 @@ realPlayer::realPlayer(MainWindow *mainWindow,QWidget *parent)
     //qDebug()<<"After connected connection";
     connect(socket, &QTcpSocket::readyRead, this, &realPlayer::onReadyRead);
 
-
-    socket->connectToHost("127.0.0.1", 1234);
+    socket->connectToHost("localhost", 1234);
+   // socket->connectToHost("192.168.29.97", 1234);
     qDebug()<<"After all COnnection: ";
 
 
@@ -53,8 +52,8 @@ void realPlayer::onReadyRead()
     //qDebug()<<"Welcome to readyRead";
     QByteArray data = socket->readAll();
     clientMove++;
-    qDebug() << "Received from server: " << data;
-    qDebug()<<"Move: "<<clientMove;
+    qDebug() <<"Move: "<<clientMove<<"  Received from server: " << data;
+    //qDebug()<<"Move: "<<clientMove;
     sendResponse(data);
     data.clear();
 }
@@ -128,13 +127,13 @@ void realPlayer::onConnected()
     }
     if(m->playTeam==true)
     {
-        currentInstanceTeam.push_back(this);
+
         qDebug()<<"teamInstance: "<<this;
         socket->write("true");
     }
     else
     {
-        currentInstance.push_back(this);
+
         qDebug()<<"teamInstance: "<<this;
         socket->write("false");
     }
@@ -144,7 +143,7 @@ void realPlayer::onConnected()
 void realPlayer::sendResponse(QByteArray data)
 {
     QString str=QString::fromUtf8(data);
-    int move=clientMove; qDebug()<<"move: "<<move;
+    int move=clientMove; //qDebug()<<"move: "<<move;
 
     if(move==1)
     {
@@ -154,10 +153,10 @@ void realPlayer::sendResponse(QByteArray data)
         {
             if(str[i]=='l')
             {
-                qDebug()<<"length1: "<<length1;
+               // qDebug()<<"length1: "<<length1;
                 bool ok;
                 int number = length1.toInt(&ok);
-                qDebug()<<"length1: "<<length1<<"   number: "<<number;
+               // qDebug()<<"length1: "<<length1<<"   number: "<<number;
                 if (ok)
                 {
                     (flag==0)?clientNumber=number:roomNumber=number;
@@ -176,14 +175,14 @@ void realPlayer::sendResponse(QByteArray data)
                 length1+=str[i];
             }
         }
-        qDebug()<<"Connected: "<<clientNumber<<"   room number: "<<roomNumber;
+        //qDebug()<<"Connected: "<<clientNumber<<"   room number: "<<roomNumber;
         setRoomNumberToClickCard();
 
         //send your name and want to play in team or not
 
         QString name=m->getPlayerName();
         //name=QString::number(name.length())+"l"+name;
-        qDebug()<<"name: "<<name;
+        //qDebug()<<"name: "<<name;
         Team=m->playTeam;
         socket->write(name.toUtf8());
 
@@ -279,7 +278,7 @@ void realPlayer::sendResponse(QByteArray data)
     }
     else if(move<57)
     {
-        qDebug()<<"Server message: "<<str;
+        //qDebug()<<"Server message: "<<str;
 
         //currentPlayer+playerwhoThrow+throwCardValue+"l"
 
@@ -305,22 +304,20 @@ void realPlayer::sendResponse(QByteArray data)
 
             indx=removeQlable(tempCurrentClient,playerNum,1);
 
-            //qDebug()<<"Message from server: "<<str;
-            qDebug()<<"tempCurrentClient: "<<tempCurrentClient<<"   playerThrow: "<<playerNum<<"  cardValue: "<<cardValue<<"  indx:"<<indx;
+
+            //qDebug()<<"tempCurrentClient: "<<tempCurrentClient<<"   playerThrow: "<<playerNum<<"  cardValue: "<<cardValue<<"  indx:"<<indx;
 
 
             int playerTurn=str[str.size()-1].unicode()-'0';
-            //qDebug()<<"player turn:"<<playerTurn;
+
             if(str[str.size()-1]!='l' && str.size()!=2)
             {
 
                 //currentPlayer+playerwhoThrow+throwCardValue+"l"+validCard+"l"+playerWhomTurnNow
-                //qDebug()<<"Player turn usrd: "<<playerTurn;
-                //currentClient=playerTurn;
-                //tempCurrentClient=currentClient;
-                tempCurrentClient=playerTurn;
+
+                //tempCurrentClient=playerTurn;
                 //show thrown card
-                //currentInstance[(roomNumber*4+playerTurn)]->addCardTable(cardValue,indx+1);
+
                 addCardTable(cardValue,indx+1);
                 cardValue="";
                 //extract valid card and make them clickable
@@ -328,8 +325,8 @@ void realPlayer::sendResponse(QByteArray data)
                 {
                     if(str[j]=='l')
                     {
-                        qDebug()<<"Extracted Valid cardvalue: "<<cardValue;
-                        //currentInstance[(roomNumber*4+tempCurrentClient)]->changeStateOfClickEvent(true,cardValue);
+                        //qDebug()<<"Extracted Valid cardvalue: "<<cardValue;
+
                         changeStateOfClickEvent(true,cardValue);
                         cardValue="";
                     }
@@ -338,17 +335,56 @@ void realPlayer::sendResponse(QByteArray data)
                         cardValue+=str[j];
                     }
                 }
-                //currentInstance[(roomNumber*4+tempCurrentClient)]->realPlayerNameInfo[2]->setText("Your Turn");
-                realPlayerNameInfo[2]->setText("Your Turn");
+                if(cardValue!="" && tempCurrentClient==playerTurn)
+                {
+                    qDebug()<<"Hello in cardValue:";
+                    realPlayerNameInfo[2]->setText("Your Turn");
+                    tempCurrentClient=playerTurn;
+                }
+                if(move%4==0 && tempCurrentClient!=playerTurn)
+                {
+                    qDebug()<<"Welcome in updating set in without realplayer";
+                    qDebug()<<"playerTurn: "<<playerTurn<<"  tempCurrentClient: "<<tempCurrentClient<<" indx: "<<indx;
+
+                        //qDebug()<<"Welcome to updating set in";
+                        //addCardTable(cardValue,indx+1);
+                        indx=removeQlable(tempCurrentClient,playerTurn,0);
+                        QString setText=playerNameInfo[indx][2]->text();
+                        setText=updatePlayerBid(setText);
+                        playerNameInfo[indx][2]->setText(setText);
+                        if(Team)
+                        {
+                            int tempPlayer=str[str.size()-2].unicode()-'0';
+                            indx=removeQlable(tempCurrentClient,tempPlayer,0);
+                            if(tempCurrentClient==tempPlayer)
+                            {
+                                qDebug()<<"welcome to his teammate: "<<tempPlayer;
+                                setText=realPlayerNameInfo[3]->text();
+                                setText=updatePlayerBid(setText);
+                                realPlayerNameInfo[3]->setText(setText);
+                            }
+                            else
+                            {
+                                qDebug()<<"Welcome to his teammate";
+                                setText=playerNameInfo[indx][2]->text();
+                                setText=updatePlayerBid(setText);
+                                playerNameInfo[indx][2]->setText(setText);
+                            }
+                        }
+
+
+
+                }
+
             }
             else
             {
                 //currentPlayer+playerwhoThrow+throwCardValue+"l"
-                qDebug()<<"other player";
+                //qDebug()<<"other player";
                 //show thrown card
                 if(tempCurrentClient!=playerNum)
                 {
-                    //currentInstance[(roomNumber*4+tempCurrentClient)]->addCardTable(cardValue,indx+1);
+
                     addCardTable(cardValue,indx+1);
                 }
             }
@@ -362,23 +398,34 @@ void realPlayer::sendResponse(QByteArray data)
                 {
                     //for first firstPlayer currentPlayer+firstPlayer;
                     qDebug()<<"First Player Turn"<<playerNum;
-                    //currentClient=playerTurn;
+
                     tempCurrentClient=playerTurn;
-                    //currentInstance[(roomNumber*4+tempCurrentClient)]->realPlayerNameInfo[2]->setText("Your Turn");
+
                     realPlayerNameInfo[2]->setText("Your Turn");
                     //update this player bid
                     QString setText=realPlayerNameInfo[3]->text();
                     setText=updatePlayerBid(setText);
                     realPlayerNameInfo[3]->setText(setText);
-                    //currentInstance[(roomNumber*4+tempCurrentClient)]->changeStateOfClickEvent(true);
+
                     changeStateOfClickEvent(true);
+
+                    if(Team)
+                    {
+                        qDebug()<<"Welcome to set updating in team";
+                        int tempPlayer=str[str.size()-2].unicode()-'0';
+                        indx=removeQlable(tempCurrentClient,tempPlayer,0);
+                        playerNameInfo[indx][2]->setText(setText);
+                        qDebug()<<"welcome to his teammate: "<<tempPlayer;
+                    }
+
+
+                /*
                     for(int k=0; k<4; k++)
                     {
                         if(k!=playerTurn)
                         {
                             indx=removeQlable(k,tempCurrentClient,0);
-                            //setText=currentInstance[(roomNumber*4+k)]->playerNameInfo[indx][2]->text();
-                            //setText=updatePlayerBid(setText);
+
 
                             if(Team)
                             {
@@ -399,15 +446,14 @@ void realPlayer::sendResponse(QByteArray data)
                             if(k!=((tempCurrentClient+2)%4))
                             {
                                 indx=removeQlable(k,(tempCurrentClient+2)%4,0);
-                                //setText=currentInstance[(roomNumber*4+k)]->playerNameInfo[indx][2]->text();
-                                //setText=updatePlayerBid(setText);
+
                                 currentInstanceTeam[(roomNumber*4+k)]->playerNameInfo[indx][2]->setText(setText);
 
                             }
                         }
                         qDebug()<<"Status updated successfully";
                     }
-
+*/
 
 
                 }
@@ -522,7 +568,7 @@ void realPlayer::putDataIntoLabels(QString str)
         playerNameInfo[1][0]->setText( QString::number((clientNumber+2)%4)  +  ans[(clientNumber+2)%4].second);
         playerNameInfo[2][0]->setText( QString::number((clientNumber+3)%4)  + ans[(clientNumber+3)%4].second);
 
-        qDebug()<<" CardValues ";
+        //qDebug()<<" CardValues ";
 
         //setting player card values now with their images
         length1="";   temp=0;
@@ -530,7 +576,7 @@ void realPlayer::putDataIntoLabels(QString str)
         {
             if(str[j]=='l')
             {
-                qDebug()<<"Value: "<<length1;
+                //qDebug()<<"Value: "<<length1;
                 bool ok;
                 int number1 = length1.toInt(&ok);
                 //qDebug()<<"After OK";
@@ -574,7 +620,7 @@ void realPlayer::putDataIntoLabels(QString str)
         int number1 = length1.toInt(&ok);
         //updating currentCLient
         //currentClient=number1;
-        qDebug()<<"After OK";
+        //qDebug()<<"After OK";
         if(ok)
         {
             realPlayer* tempPtr;
@@ -593,7 +639,7 @@ void realPlayer::putDataIntoLabels(QString str)
                 //ask for him for trumpColor
                 //currentInstance[(roomNumber*4+clientRound%4)]->makeTrumpColorGUI(1);
                 tempPtr->makeTrumpColorGUI(1);
-                qDebug()<<"Successfully out from trumpGUI";
+                //qDebug()<<"Successfully out from trumpGUI";
             }
         }
         else
@@ -623,7 +669,7 @@ void realPlayer::putDataIntoLabels(QString str)
         }
         int num = clientNumber;
         scoreCard.push_back(ans);
-        qDebug()<<"bid vector: "<<ans;
+        //qDebug()<<"bid vector: "<<ans;
 
         //left
         playerNameInfo[0][2]->setText("0/"+ans[(num+1)%4]);
