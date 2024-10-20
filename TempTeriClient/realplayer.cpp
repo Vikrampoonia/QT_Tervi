@@ -310,7 +310,7 @@ void realPlayer::sendResponse(QByteArray data)
 
             int playerTurn=str[str.size()-1].unicode()-'0';
 
-            if(str[str.size()-1]!='l' && str.size()!=2)
+            if(str[str.size()-1]!='l')
             {
 
                 //currentPlayer+playerwhoThrow+throwCardValue+"l"+validCard+"l"+playerWhomTurnNow
@@ -417,43 +417,6 @@ void realPlayer::sendResponse(QByteArray data)
                         playerNameInfo[indx][2]->setText(setText);
                         qDebug()<<"welcome to his teammate: "<<tempPlayer;
                     }
-
-
-                /*
-                    for(int k=0; k<4; k++)
-                    {
-                        if(k!=playerTurn)
-                        {
-                            indx=removeQlable(k,tempCurrentClient,0);
-
-
-                            if(Team)
-                            {
-                                currentInstanceTeam[(roomNumber*4+k)]->playerNameInfo[indx][2]->setText(setText);
-                            }
-                            else
-                            {
-                                currentInstance[(roomNumber*4+k)]->playerNameInfo[indx][2]->setText(setText);
-                            }
-                        }
-                    }
-
-                    if(Team)
-                    {
-                        currentInstanceTeam[(roomNumber*4+(tempCurrentClient+2)%4)]->realPlayerNameInfo[3]->setText(setText);
-                        for(int k=0; k<4; k++)
-                        {
-                            if(k!=((tempCurrentClient+2)%4))
-                            {
-                                indx=removeQlable(k,(tempCurrentClient+2)%4,0);
-
-                                currentInstanceTeam[(roomNumber*4+k)]->playerNameInfo[indx][2]->setText(setText);
-
-                            }
-                        }
-                        qDebug()<<"Status updated successfully";
-                    }
-*/
 
 
                 }
@@ -618,27 +581,17 @@ void realPlayer::putDataIntoLabels(QString str)
         length1="";   length1=str[str.length()-1];
         bool ok;
         int number1 = length1.toInt(&ok);
-        //updating currentCLient
-        //currentClient=number1;
-        //qDebug()<<"After OK";
+
         if(ok)
         {
-            realPlayer* tempPtr;
-            if(this->Team)
-            {
-                tempPtr=currentInstanceTeam[(roomNumber*4+clientRound%4)];
-            }
-            else
-            {
-                tempPtr=currentInstance[(roomNumber*4+clientRound%4)];
-            }
+
 
             //qDebug()<<"client NUmber: "<<clientNumber<<"   currententCLient"<<currentClient<<"    number1"<<number1<<"  room: "<<roomNumber<<"  (roomNumber*4+clientRound%4)"<<(roomNumber*4+clientRound%4);
             if(number1==clientNumber)
             {
                 //ask for him for trumpColor
                 //currentInstance[(roomNumber*4+clientRound%4)]->makeTrumpColorGUI(1);
-                tempPtr->makeTrumpColorGUI(1);
+                this->makeTrumpColorGUI(1);
                 //qDebug()<<"Successfully out from trumpGUI";
             }
         }
@@ -1650,14 +1603,7 @@ void ClickableLabel::mousePressEvent(QMouseEvent* event)
 
         realPlayer* tempPtr;
         int currentClient=this->getRealPlayerInstance()->clientNumber;
-        if(this->getRealPlayerInstance()->Team)
-        {
-            tempPtr=currentInstanceTeam[(this->getRoomNumber()*4+currentClient)];
-        }
-        else
-        {
-            tempPtr=currentInstance[(this->getRoomNumber()*4+currentClient)];
-        }
+
         tempPtr=this->getRealPlayerInstance();
 
 
